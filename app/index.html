@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f6f8" />
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#projects">Skip to project cards</a>
+    <main class="dashboard">
+      <header class="dashboard-header">
+        <div class="dashboard-topbar">
+          <a class="brand" href="#main" aria-label="Project Pulse home">
+            <span class="brand-mark" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </span>
+            <span>MONA'S TEAM</span>
+          </a>
+          <span class="snapshot-label">
+            <span class="snapshot-dot" aria-hidden="true"></span>
+            LIVE TEAM SNAPSHOT
+          </span>
+        </div>
+
+        <div class="dashboard-intro" id="main">
+          <div class="intro-copy">
+            <p class="eyebrow">A clearer view of what's moving</p>
+            <h1>Project Pulse</h1>
+            <p class="intro-description">
+              A quick read on the work, people, and priorities shaping the team right now.
+            </p>
+          </div>
+          <div class="pulse-orbit" aria-hidden="true">
+            <span class="orbit-ring orbit-ring-outer"></span>
+            <span class="orbit-ring orbit-ring-inner"></span>
+            <span class="orbit-core"></span>
+            <span class="orbit-point orbit-point-one"></span>
+            <span class="orbit-point orbit-point-two"></span>
+          </div>
+        </div>
+
+        <div class="dashboard-summary" aria-label="Project summary">
+          <div class="summary-metric">
+            <span class="summary-number" id="total-projects">--</span>
+            <span class="summary-label">Active projects</span>
+          </div>
+          <span class="summary-divider" aria-hidden="true"></span>
+          <div class="summary-metric">
+            <span class="summary-number" id="high-priority-count">--</span>
+            <span class="summary-label">High priority</span>
+          </div>
+          <p class="summary-note">Small steps. Shared momentum.</p>
+        </div>
+      </header>
+
+      <section class="projects-section" id="projects" aria-labelledby="projects-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow section-eyebrow">The work in motion</p>
+            <h2 id="projects-heading">Project overview</h2>
+          </div>
+          <p class="section-caption">Status, ownership, and the latest signal from each team.</p>
+        </div>
+
+        <p class="load-state is-loading" id="load-state" role="status" aria-live="polite">
+          <span class="loading-indicator" aria-hidden="true"></span>
+          Loading project data...
+        </p>
+        <div class="project-grid" id="project-grid" aria-describedby="load-state"></div>
+      </section>
+
+      <footer class="dashboard-footer">
+        <span class="footer-mark" aria-hidden="true"></span>
+        <p>Made for people building things together.</p>
+      </footer>
+    </main>
+
+    <script>
+      const projectGrid = document.getElementById("project-grid");
+      const loadState = document.getElementById("load-state");
+      const totalProjects = document.getElementById("total-projects");
+      const highPriorityCount = document.getElementById("high-priority-count");
+      const requiredFields = [
+        "name",
+        "owner",
+        "status",
+        "recentActivity",
+        "priority",
+        "summary",
+      ];
+
+      function setLoadState(message, isError = false) {
+        loadState.replaceChildren(document.createTextNode(message));
+        loadState.classList.toggle("is-error", isError);
+        loadState.classList.remove("is-loading");
+      }
+
+      function makeTextElement(tagName, className, value) {
+        const element = document.createElement(tagName);
+        element.className = className;
+        element.textContent = value;
+        return element;
+      }
+
+      function toDataValue(value) {
+        return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      }
+
+      function createSignal(label, value, className) {
+        const signal = document.createElement("div");
+        signal.className = "project-signal";
+        signal.append(makeTextElement("span", "signal-label", label));
+
+        const badge = makeTextElement("span", className, value);
+        badge.dataset[label.toLowerCase()] = toDataValue(value);
+        signal.append(badge);
+        return signal;
+      }
+
+      function createProjectCard(project, index) {
+        const card = document.createElement("article");
+        card.className = "project-card";
+
+        const cardHeader = document.createElement("div");
+        cardHeader.className = "project-card-header";
+
+        const titleGroup = document.createElement("div");
+        titleGroup.className = "project-card-title-group";
+        titleGroup.append(makeTextElement("p", "project-card-index", `PROJECT ${String(index + 1).padStart(2, "0")}`));
+        titleGroup.append(makeTextElement("h3", "project-card-title", project.name));
+        titleGroup.append(makeTextElement("p", "project-card-owner", `Led by ${project.owner}`));
+        cardHeader.append(titleGroup);
+
+        const signals = document.createElement("div");
+        signals.className = "project-card-signals";
+        signals.append(createSignal("Status", project.status, "status-badge"));
+        signals.append(createSignal("Priority", project.priority, "priority-badge"));
+
+        card.append(cardHeader, signals);
+        card.append(makeTextElement("p", "project-card-activity", project.recentActivity));
+        card.append(makeTextElement("p", "project-card-summary", project.summary));
+        return card;
+      }
+
+      function validateProjects(projects) {
+        if (!Array.isArray(projects)) {
+          throw new Error("Project data must contain a top-level projects array.");
+        }
+
+        for (const project of projects) {
+          if (
+            !project ||
+            requiredFields.some(
+              (field) => typeof project[field] !== "string" || project[field].trim() === "",
+            )
+          ) {
+            throw new Error(
+              "Each project needs a name, owner, status, recentActivity, priority, and summary.",
+            );
+          }
+        }
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("project-data.json");
+          if (!response.ok) {
+            throw new Error(`Project data request failed (${response.status}).`);
+          }
+
+          const data = await response.json();
+          validateProjects(data && data.projects);
+
+          totalProjects.textContent = String(data.projects.length);
+          highPriorityCount.textContent = String(
+            data.projects.filter((project) => toDataValue(project.priority) === "high").length,
+          );
+
+          if (data.projects.length === 0) {
+            setLoadState("No projects are available yet.");
+            return;
+          }
+
+          projectGrid.replaceChildren(
+            ...data.projects.map((project, index) => createProjectCard(project, index)),
+          );
+          setLoadState(`Showing ${data.projects.length} active projects.`);
+        } catch (error) {
+          console.error("Project Pulse could not load project data.", error);
+          setLoadState(
+            "Project data could not be loaded. Check project-data.json and reload the dashboard.",
+            true,
+          );
+        }
+      }
+
+      loadProjects();
+    </script>
+  </body>
+</html>

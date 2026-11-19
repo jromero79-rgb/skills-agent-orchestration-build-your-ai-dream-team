@@ -1,0 +1,36 @@
+{
+  "projects": [
+    {
+      "name": "Atlas onboarding",
+      "owner": "Nadia Chen",
+      "status": "On track",
+      "recentActivity": "Contributor interviews wrapped; the first flow is ready for review.",
+      "priority": "High",
+      "summary": "Make the first week easier for every new teammate with a friendly, guided setup."
+    },
+    {
+      "name": "Community launch",
+      "owner": "Marco Silva",
+      "status": "In progress",
+      "recentActivity": "The launch checklist is up to date and partner notes are in.",
+      "priority": "Medium",
+      "summary": "Bring contributors together around a welcoming launch and a clear path to join in."
+    },
+    {
+      "name": "Mobile refresh",
+      "owner": "Priya Patel",
+      "status": "At risk",
+      "recentActivity": "Device testing surfaced a navigation issue; a fix is being scoped.",
+      "priority": "High",
+      "summary": "Give the project workspace a more focused, comfortable experience on smaller screens."
+    },
+    {
+      "name": "Data quality sprint",
+      "owner": "Elliot Brooks",
+      "status": "On track",
+      "recentActivity": "The first cleanup batch is complete and validation is underway.",
+      "priority": "Low",
+      "summary": "Make project reporting more dependable with clearer ownership and cleaner records."
+    }
+  ]
+}
